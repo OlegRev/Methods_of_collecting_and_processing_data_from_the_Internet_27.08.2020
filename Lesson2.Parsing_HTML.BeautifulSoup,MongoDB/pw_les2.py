@@ -91,14 +91,6 @@ def parser_vacancy_item(required_vacancy:'bs4.element.Tag', website: str, parser
         company_metainfo = required_vacancy.find_all(parser_params['company_metainfo'][0],
                                                      {parser_params['company_metainfo'][1]
                                                      :parser_params['company_metainfo'][2]})
-        try:
-            company_link = company_metainfo[0].find(parser_params['company_link'][0],
-                                                    {parser_params['company_link'][1]
-                                                    : parser_params['company_link'][2]}).get('href')
-            vacancy_data['company_link'] = company_link  
-        except:
-            vacancy_data['company_link'] = None
-            
     elif website == 'https://www.superjob.ru':
         vacancy_data['link'] = website + vacancy_link
         company_metainfo = required_vacancy.find(parser_params['company_metainfo'][0],
@@ -107,14 +99,14 @@ def parser_vacancy_item(required_vacancy:'bs4.element.Tag', website: str, parser
         company_metainfo = company_metainfo.find_all(parser_params['company_metainfo'][3],
                                                      {parser_params['company_metainfo'][4]
                                                      :parser_params['company_metainfo'][5]})
-        try:
-            company_link = company_metainfo[0].find(parser_params['company_link'][0],
-                                                    {parser_params['company_link'][1]
-                                                    : parser_params['company_link'][2]}).get('href')
-            vacancy_data['company_link'] = website + company_link  
-        except:
-            vacancy_data['company_link'] = None
-            
+        
+    try:
+        company_link = company_metainfo[0].find(parser_params['company_link'][0],
+                                                {parser_params['company_link'][1]
+                                                : parser_params['company_link'][2]}).get('href')
+        vacancy_data['company_link'] = website + company_link  
+    except:
+        vacancy_data['company_link'] = None        
     try: 
         company_name = company_metainfo[0].find(parser_params['company_name'][0],
                                                 {parser_params['company_name'][1]
@@ -156,8 +148,9 @@ def hh_get_vacancies(required_vacancy: str, headers: dict, num_area: int = 0):
     """
     vacancies_data = []
     main_link = 'https://hh.ru'
-    second_link ='search/vacancy?'
-    params_hh = {'L_is_autosearch':'false',
+    second_link ='/search/vacancy?'
+    params_hh = {'fromSearchLine': 'true',
+                'L_is_autosearch':'false',
                  'area': num_area,
                  'enable_snippets':'true',
                  'salary': '',
@@ -202,7 +195,7 @@ def hh_get_vacancies(required_vacancy: str, headers: dict, num_area: int = 0):
     return vacancies_data
 
 
-def sj_get_vacancies(required_vacancy: str, headers: dict, num_area: int = 0):
+def sj_get_vacancies(required_vacancy: str, headers: dict):
     """[summary]
 
     Args:
@@ -273,6 +266,9 @@ def get_df_vacancies(required_vacancy: str, headers: dict, vacancies_data = []):
     df = pd.DataFrame(vacancies_data)
 
     return df
+
+
+
 
 
 required_vacancy = 'Программист python'
