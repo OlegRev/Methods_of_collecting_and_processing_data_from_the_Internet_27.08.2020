@@ -71,7 +71,7 @@ def get_info_m_email(driver):
     info_email['text_content_mesege'] = get_element_by_css(driver, 'div[id="readmsg__body"]', text=True)  
     return info_email
 
-
+# 1
 DATABASE = 'messeges_db'
 client = MongoClient('127.0.0.1:27017',
                      username='admin_messeges',
@@ -128,5 +128,47 @@ elif main_link == main_links['mobile_link']:
     else:
         driver.close()
     
+# 2   
+DATABASE = 'products_db'
+client = MongoClient('127.0.0.1:27017',
+                     username='admin_products',
+                     password='password_db',
+                     authSource='products_db',
+                     authMechanism='SCRAM-SHA-1')
+db = client[DATABASE]
+collection = db['mvideo_ru']
 
+
+chrome_options = Options()
+chrome_options.add_argument('start-maximized')
+   
+
+driver = webdriver.Chrome('/home/oleg_rev/education/Faculty_of_Artificial_Intelligence/'
+                          'Methods_of_collecting_and_processing_data_from_the_Internet/'
+                          'Lesson5.Parsing_Selenium_Data_in_Python/chromedriver',options=chrome_options)
+
+
+driver.get("https://www.mvideo.ru/")
+# bestsellers = get_element_by_xpath(driver, '//div[contains(text(), "Хиты продаж")]/../..//following-sibling::div[@class="gallery-layout sel-hits-block "]')
+next_button = get_element_by_xpath(driver, '//div[contains(text(), "Хиты продаж")]/../..//following-sibling::div[@class="gallery-layout sel-hits-block "]//a[@class="next-btn sel-hits-button-next"]')
+pages = driver.find_elements_by_xpath('//div[contains(text(),  "Хиты продаж")]/../..//following-sibling::div[@class="gallery-layout sel-hits-block "]//div[@class="carousel-paging"]/a[@href="#"]')
+
+for page in range(len(pages)):
+    sleep(5)
+    
+    next_button.click()
+else:
+    data_prods = []
+    description_prods = {}
+    description_prods['name'] = driver.find_elements_by_xpath('//div[contains(text(), "Хиты продаж")]/../..//following-sibling::div[@class="gallery-layout sel-hits-block "]//h4')
+    description_prods['link'] = driver.find_elements_by_xpath('//div[contains(text(), "Хиты продаж")]/../..//following-sibling::div[@class="gallery-layout sel-hits-block "]//a[@class="sel-product-tile-title"]')
+    description_prods['price'] = driver.find_elements_by_xpath('//div[contains(text(), "Хиты продаж")]/../..//following-sibling::div[@class="gallery-layout sel-hits-block "]//div[@class="c-pdp-price__current"]')
+    for itm in range(len(description_prods['name'])):
+        info_prod = {} 
+        info_prod['name'] = description_prods['name'][itm].get_attribute('title')
+        info_prod['link'] = description_prods['link'][itm].get_attribute('href')
+        info_prod['price'] = description_prods['price'][itm].text
+        collection.insert_one(info_prod)
+        data_prods.append(info_prod)
+        
     
