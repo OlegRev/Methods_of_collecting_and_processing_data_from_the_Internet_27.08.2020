@@ -2,10 +2,9 @@ import scrapy
 from scrapy.http import HtmlResponse
 from scrapy.loader import ItemLoader
 
-from lerua_merlin.items import LeruaMerlenItem
+from ..items import LeruaMerlenItem
 
 
-#
 class LeroymerlinruSpider(scrapy.Spider):
     name = "leroymerlinru"
     allowed_domains = ["leroymerlin.ru"]
@@ -33,7 +32,9 @@ class LeroymerlinruSpider(scrapy.Spider):
 
         loader.add_xpath("price", '//span[@slot="price"]/text()')
 
-        loader.add_xpath("photos", '//source[contains(@data-origin, "2000")]/@data-origin')
+        loader.add_xpath(
+            "photos", '//source[contains(@data-origin, "2000")]/@data-origin'
+        )
 
         loader.add_xpath("params", '//div[@class="def-list__group"]//text()')
 

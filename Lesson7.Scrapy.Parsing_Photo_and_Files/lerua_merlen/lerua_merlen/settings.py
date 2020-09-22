@@ -68,6 +68,7 @@ CONCURRENT_REQUESTS = 16
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
     'lerua_merlen.pipelines.LeruaMerlenPipeline': 300,
+    'lerua_merlen.pipelines.LeruaMerlenPhotosPipeline': 100,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
