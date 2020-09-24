@@ -16,7 +16,7 @@ SPIDER_MODULES = ['lerua_merlen.spiders']
 NEWSPIDER_MODULE = 'lerua_merlen.spiders'
 
 LOG_ENABLED = True
-LOG_LEVEL = 'DUBEG' 
+LOG_LEVEL = 'DEBUG' 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36'
