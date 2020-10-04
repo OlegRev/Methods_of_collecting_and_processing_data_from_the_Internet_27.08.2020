@@ -14,7 +14,8 @@ NEWSPIDER_MODULE = "parser_instagram.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36"
+USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:80.0) Gecko/20100101 Firefox/80.0"
+# "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36"
 
 LOG_ENABLE = 'True'
 LOG_LEVEL = 'DEBUG'
@@ -64,9 +65,9 @@ DOWNLOAD_DELAY = 2.25
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-# ITEM_PIPELINES = {
-#    'parser_instagram.pipelines.ParserInstagramPipeline': 300,
-# }
+ITEM_PIPELINES = {
+    'parser_instagram.pipelines.ParserInstagramPipeline': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html

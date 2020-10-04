@@ -5,9 +5,22 @@
 
 
 # useful for handling different item types with a single interface
+from pymongo import MongoClient
 
 
 class ParserInstagramPipeline:
+    def __init__(self):
+        DATABASE = "instagram_db"
+        client = MongoClient(
+            "127.0.0.1:27017",
+            username="admin_instagram",
+            password="password_db",
+            authSource="instagram_db",
+            authMechanism="SCRAM-SHA-1",
+        )
+        self.mongo_base = client[DATABASE]
+
     def process_item(self, item, spider):
-        print(1)
+        collection = self.mongo_base[spider.name]
+        collection.insert_one(item)
         return item

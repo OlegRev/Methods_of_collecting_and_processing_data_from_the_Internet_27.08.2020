@@ -7,6 +7,11 @@ from urllib.parse import urlencode
 import scrapy
 from scrapy.http import HtmlResponse
 
+from graphql_query_hashs.graphql_query_hashs import (
+    followers_query_hash,
+    followquery_hashs,
+    posts_query_hash,
+)
 from login_data import login_data_instagram
 from parser_instagram.items import ParserInstagramItem
 
@@ -21,10 +26,17 @@ class InstagramcomSpider(scrapy.Spider):
     insta_pwd = login_data_instagram.password
     # Пользователь, у которого собираем посты.
     # Можно указать список
-    parse_user = "ai_machine_learning"
+    parse_user_list = [
+        "python.russia",
+        "rassbery.ru",
+        "suse.linux",
+        "raspberry_pi_builds",
+    ]
+    # ["geekbrains.ru", "ai_machine_learning", "python.learning"]
     graphql_url = "https://www.instagram.com/graphql/query/?"
     # hash для получения данных по постах с главной страницы
-    posts_hash = "eddbde960fed6bde675388aac39a3657"
+    posts_hash = posts_query_hash
+    follow_hashs = followquery_hashs
     # Первый запрос на стартовую страницу
 
     def parse(self, response: HtmlResponse):
@@ -44,11 +56,12 @@ class InstagramcomSpider(scrapy.Spider):
         if j_body["authenticated"]:  # Проверяем ответ после авторизации
             # Переходим на желаемую страницу пользователя.
             # Сделать цикл для кол-ва пользователей больше 2-ух
-            yield response.follow(
-                f"/{self.parse_user}",
-                callback=self.user_data_parse,
-                cb_kwargs={"username": self.parse_user},
-            )
+            for parse_user in self.parse_user_list:
+                yield response.follow(
+                    f"/{parse_user}",
+                    callback=self.user_data_parse,
+                    cb_kwargs={"username": parse_user},
+                )
 
     def user_data_parse(self, response: HtmlResponse, username):
         user_id = self.fetch_user_id(
@@ -57,61 +70,66 @@ class InstagramcomSpider(scrapy.Spider):
         variables = {
             "id": user_id,  # Формируем словарь для передачи даных в запрос
             "first": 12,
-        }  # 12 постов. Можно больше (макс. 50)
+        }  # 12 folow. 
         # Формируем ссылку для получения данных о постах
-        url_posts = (
-            f"{self.graphql_url}query_hash={self.posts_hash}&{urlencode(variables)}"
-        )
-        yield response.follow(
-            url_posts,
-            callback=self.user_posts_parse,
-            cb_kwargs={
-                "username": username,
-                "user_id": user_id,
-                "variables": deepcopy(variables),
-            },  # variables ч/з deepcopy во избежание гонок
-        )
 
-    def user_posts_parse(
-        self, response: HtmlResponse, username, user_id, variables
-    ):  # Принимаем ответ. Не забываем про параметры от cb_kwargs
-        j_data = json.loads(response.text)
-        page_info = (
-            j_data.get("data")
-            .get("user")
-            .get("edge_owner_to_timeline_media")
-            .get("page_info")
-        )
-        if page_info.get("has_next_page"):  # Если есть следующая страница
-            variables["after"] = page_info[
-                "end_cursor"
-            ]  # Новый параметр для перехода на след. страницу
-            url_posts = (
-                f"{self.graphql_url}query_hash={self.posts_hash}&{urlencode(variables)}"
-            )
+        for f_hash in self.follow_hashs:
+            url_follow = f"{self.graphql_url}query_hash={f_hash}&{urlencode(variables)}"
             yield response.follow(
-                url_posts,
-                callback=self.user_posts_parse,
+                url_follow,
+                callback=self.user_follow_parse,
                 cb_kwargs={
                     "username": username,
                     "user_id": user_id,
                     "variables": deepcopy(variables),
+                    "f_hash": deepcopy(f_hash),
                 },
             )
-        posts = (
-            j_data.get("data")
-            .get("user")
-            .get("edge_owner_to_timeline_media")
-            .get("edges")
-        )  # Сами посты
-        for post in posts:  # Перебираем посты, собираем данные
-            item = ParserInstagramItem(
-                user_id=user_id,
-                photo=post["node"]["display_url"],
-                likes=post["node"]["edge_media_preview_like"]["count"],
-                post=post["node"],
+
+    def user_follow_parse(
+        self, response: HtmlResponse, username, user_id, variables, f_hash
+    ):  # Принимаем ответ. Не забываем про параметры от cb_kwargs
+        j_data = json.loads(response.text)
+        if f_hash == followers_query_hash:
+            edges_follows = "edge_followed_by"
+            follow_stat = "followers"
+        else:
+            edges_follows = "edge_follow"
+            follow_stat = "following"
+        page_info = j_data.get("data").get("user").get(edges_follows).get("page_info")
+        if page_info.get("has_next_page"):  # Если есть следующая страница
+            variables["after"] = page_info[
+                "end_cursor"
+            ]  # Новый параметр для перехода на след. страницу
+            url_follow = f"{self.graphql_url}query_hash={f_hash}&{urlencode(variables)}"
+            yield response.follow(
+                url_follow,
+                callback=self.user_follow_parse,
+                cb_kwargs={
+                    "username": username,
+                    "user_id": user_id,
+                    "variables": deepcopy(variables),
+                    "f_hash": deepcopy(f_hash),
+                },
             )
-        yield item  # В пайплайн
+
+        follow_ing_ers = (
+            j_data.get("data").get("user").get(edges_follows).get("edges")
+        )  # Сами  подписчики и подписки
+        for (
+            follow
+        ) in follow_ing_ers:  # Перебираем подписчиков и подписок, собираем данные
+            item = ParserInstagramItem(
+                user_name=username,
+                user_id=user_id,
+                follow_stat=follow_stat,
+                follow_id=follow["node"]["id"],
+                follow_username=follow["node"]["username"],
+                follow_full_name=follow["node"]["full_name"],
+                follow_photo=follow["node"]["profile_pic_url"],
+                follow=follow["node"],
+            )
+            yield item
 
     # Получаем токен для авторизации
     def fetch_csrf_token(self, text):
